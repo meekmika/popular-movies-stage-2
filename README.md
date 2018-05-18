@@ -1,6 +1,4 @@
 # Popular Movies, Stage 2
-*[Stage 1](https://github.com/meekmika/popular-movies-stage-1)*
-
 A part of the Android Developer Nanodegree Program
 
 ## Usage
@@ -11,6 +9,7 @@ To run the app, a personal API key from [themoviedb.org](https://www.themoviedb.
 theMovieDbApiKey = your_api_key
 ```
 ## Features
+*Implemented in [Stage 1](https://github.com/meekmika/popular-movies-stage-1)*
 - Upon launch, present the user with an grid arrangement of movie posters.
 - Allow your user to change sort order via a setting:
   - The sort order can be by most popular, or by top rated
@@ -20,6 +19,9 @@ theMovieDbApiKey = your_api_key
   - A plot synopsis (called overview in the api)
   - user rating (called vote_average in the api)
   - release date
+
+*Implemented in **Stage 2***
+- Allow users to read reviews of a selected movie.
 
 ## Screens
 <div float="left">
