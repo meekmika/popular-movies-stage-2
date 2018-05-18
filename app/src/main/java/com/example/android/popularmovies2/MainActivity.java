@@ -30,7 +30,7 @@ import retrofit2.Response;
 
 public class MainActivity extends AppCompatActivity implements
         SharedPreferences.OnSharedPreferenceChangeListener,
-        MoviePosterAdapter.MovieAdapterOnClickHandler {
+        MoviePosterAdapter.MoviePosterAdapterOnClickHandler {
 
     private static final String TAG = MainActivity.class.getSimpleName();
     @BindView(R.id.rv_movies)

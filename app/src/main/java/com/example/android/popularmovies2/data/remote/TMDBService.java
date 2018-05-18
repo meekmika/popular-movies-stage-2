@@ -1,6 +1,7 @@
 package com.example.android.popularmovies2.data.remote;
 
 import com.example.android.popularmovies2.BuildConfig;
+import com.example.android.popularmovies2.data.model.TMDBMovieVideosResponse;
 import com.example.android.popularmovies2.data.model.TMDBMoviesResponse;
 import com.example.android.popularmovies2.data.model.TMDBMovieReviewsResponse;
 
@@ -21,4 +22,6 @@ public interface TMDBService {
     @GET("movie/{movie_id}/reviews?api_key=" + API_KEY)
     Call<TMDBMovieReviewsResponse> getReviews(@Path("movie_id") int movieId);
 
+    @GET("movie/{movie_id}/videos?api_key=" + API_KEY)
+    Call<TMDBMovieVideosResponse> getVideos(@Path("movie_id") int movieId);
 }

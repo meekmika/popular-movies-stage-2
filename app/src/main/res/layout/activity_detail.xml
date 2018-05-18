@@ -34,7 +34,6 @@
                 android:elevation="4dp"
                 android:theme="@style/ThemeOverlay.AppCompat.ActionBar"
                 app:layout_collapseMode="pin"
-                app:layout_scrollFlags="scroll|enterAlways"
                 app:popupTheme="@style/ThemeOverlay.AppCompat.Light"
                 app:titleTextColor="@android:color/white" />
 
@@ -53,6 +52,8 @@
             android:id="@+id/content_container"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:layout_marginBottom="@dimen/margin_large"
+            android:focusableInTouchMode="true"
             android:orientation="vertical"
             android:padding="@dimen/margin_large">
 
@@ -98,7 +99,7 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="@string/release_year"
+                        android:text="@string/release_year_label"
                         android:textAllCaps="true"
                         android:textSize="@dimen/text_sz_small" />
 
@@ -115,7 +116,7 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="@string/original_title"
+                        android:text="@string/original_title_label"
                         android:textAllCaps="true"
                         android:textSize="@dimen/text_sz_small" />
 
@@ -143,7 +144,7 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="@string/overview"
+                android:text="@string/overview_label"
                 android:textSize="@dimen/text_sz_large" />
 
             <TextView
@@ -151,35 +152,95 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="@dimen/margin_large"
-                android:layout_marginTop="@dimen/margin_medium"
-                android:textSize="@dimen/text_sz_medium" />
+                android:layout_marginTop="@dimen/margin_large"
+                android:textSize="@dimen/text_sz_medium"
+                tools:text="A ticking-time-bomb insomniac and a slippery soap salesman channel primal male aggression into a shocking new form of therapy. Their concept catches on, with underground &quot;fight clubs&quot; forming in every town, until an eccentric gets in the way and ignites an out-of-control spiral toward oblivion." />
 
             <include layout="@layout/divider" />
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="@string/reviews"
+                android:text="@string/trailers_label"
+                android:textSize="@dimen/text_sz_large" />
+
+            <FrameLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_marginTop="@dimen/margin_large">
+
+                <ProgressBar
+                    android:id="@+id/pb_movie_videos_loading_indicator"
+                    android:layout_width="@dimen/loading_indicator_size"
+                    android:layout_height="@dimen/loading_indicator_size"
+                    android:layout_gravity="center" />
+
+                <TextView
+                    android:id="@+id/tv_movie_videos_no_videos_message"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/no_videos_message"
+                    android:textColor="@color/colorBlackTranslucent"
+                    android:textSize="@dimen/text_sz_medium"
+                    android:textStyle="italic"
+                    android:visibility="gone" />
+
+                <android.support.v7.widget.RecyclerView
+                    android:id="@+id/rv_movie_videos"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:visibility="invisible"
+                    tools:layoutManager="android.support.v7.widget.LinearLayoutManager"
+                    tools:listitem="@layout/movie_video_list_item"
+                    tools:orientation="horizontal"
+                    tools:visibility="visible" />
+
+
+                <LinearLayout
+                    android:id="@+id/movie_videos_error_message_display"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:gravity="center"
+                    android:orientation="vertical"
+                    android:visibility="invisible">
+
+                    <ImageView
+                        android:layout_width="wrap_content"
+                        android:layout_height="@dimen/no_connection_image_small"
+                        android:layout_marginBottom="@dimen/margin_small"
+                        android:src="@drawable/no_connection" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/error_message_reviews"
+                        android:textAlignment="center" />
+
+                </LinearLayout>
+
+            </FrameLayout>
+
+
+            <include layout="@layout/divider" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/reviews_label"
                 android:textSize="@dimen/text_sz_large" />
 
 
             <FrameLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="@dimen/margin_medium">
+                android:layout_marginTop="@dimen/margin_large">
 
                 <ProgressBar
                     android:id="@+id/pb_movie_reviews_loading_indicator"
                     android:layout_width="@dimen/loading_indicator_size"
                     android:layout_height="@dimen/loading_indicator_size"
                     android:layout_gravity="center" />
-
-                <android.support.v7.widget.RecyclerView
-                    android:id="@+id/rv_movie_reviews"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:visibility="visible"
-                    tools:listitem="@layout/movie_review_list_item" />
 
                 <TextView
                     android:id="@+id/tv_movie_reviews_no_reviews_message"
@@ -190,6 +251,13 @@
                     android:textSize="@dimen/text_sz_medium"
                     android:textStyle="italic"
                     android:visibility="gone" />
+
+                <android.support.v7.widget.RecyclerView
+                    android:id="@+id/rv_movie_reviews"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:visibility="visible"
+                    tools:listitem="@layout/movie_review_list_item" />
 
                 <LinearLayout
                     android:id="@+id/movie_reviews_error_message_display"

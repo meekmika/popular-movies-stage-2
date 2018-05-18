@@ -23,11 +23,11 @@ import butterknife.ButterKnife;
 
 public class MoviePosterAdapter extends RecyclerView.Adapter<MoviePosterAdapter.MoviePosterViewHolder> {
 
-    private final MovieAdapterOnClickHandler mClickHandler;
+    private final MoviePosterAdapterOnClickHandler mClickHandler;
     private List<Movie> mMovies;
     private Context mContext;
 
-    public MoviePosterAdapter(MovieAdapterOnClickHandler clickHandler, Context context) {
+    public MoviePosterAdapter(Context context, MoviePosterAdapterOnClickHandler clickHandler) {
         mMovies = new ArrayList<Movie>(0);
         mContext = context;
         mClickHandler = clickHandler;
@@ -46,7 +46,7 @@ public class MoviePosterAdapter extends RecyclerView.Adapter<MoviePosterAdapter.
     @Override
     public void onBindViewHolder(MoviePosterViewHolder holder, int position) {
         String posterPath = mMovies.get(position).getPosterPath();
-        String url = ApiUtils.getImageUrl(posterPath, "w500");
+        String url = ApiUtils.getImageStringUrl(posterPath, "w500");
         Picasso.with(mContext)
                 .load(url)
                 .placeholder(R.drawable.poster_placeholder)
@@ -64,7 +64,7 @@ public class MoviePosterAdapter extends RecyclerView.Adapter<MoviePosterAdapter.
         notifyDataSetChanged();
     }
 
-    public interface MovieAdapterOnClickHandler {
+    public interface MoviePosterAdapterOnClickHandler {
         void onClick(Movie selectedMovie);
     }
 

@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ImageView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/iv_movie_video_thumbnail"
+    android:layout_width="250dp"
+    android:layout_height="160dp"
+    android:layout_marginRight="@dimen/margin_medium"
+    android:background="@color/colorLightGray"
+    android:scaleType="centerCrop" />

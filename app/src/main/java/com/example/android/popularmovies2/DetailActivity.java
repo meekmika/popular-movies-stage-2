@@ -1,6 +1,10 @@
 package com.example.android.popularmovies2;
 
+import android.content.ActivityNotFoundException;
+import android.content.Context;
+import android.content.Intent;
 import android.graphics.Color;
+import android.net.Uri;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.view.ViewCompat;
@@ -16,7 +20,9 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import com.example.android.popularmovies2.data.model.Movie;
+import com.example.android.popularmovies2.data.model.MovieVideo;
 import com.example.android.popularmovies2.data.model.TMDBMovieReviewsResponse;
+import com.example.android.popularmovies2.data.model.TMDBMovieVideosResponse;
 import com.example.android.popularmovies2.data.remote.TMDBService;
 import com.example.android.popularmovies2.utils.ApiUtils;
 import com.squareup.picasso.Picasso;
@@ -29,7 +35,7 @@ import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 
-public class DetailActivity extends AppCompatActivity {
+public class DetailActivity extends AppCompatActivity implements MovieVideoAdapter.MovieVideoAdapterOnClickHandler {
 
     private static final String TAG = MainActivity.class.getSimpleName();
     @BindView(R.id.iv_movie_backdrop)
@@ -49,6 +55,18 @@ public class DetailActivity extends AppCompatActivity {
     @BindView(R.id.detail_toolbar)
     Toolbar mToolbar;
     @Nullable
+    @BindView(R.id.rv_movie_videos)
+    RecyclerView mMovieVideosRecyclerView;
+    @Nullable
+    @BindView(R.id.pb_movie_videos_loading_indicator)
+    ProgressBar mMovieVideosLoadingIndicator;
+    @Nullable
+    @BindView(R.id.movie_videos_error_message_display)
+    LinearLayout mMovieVideosErrorMessageDisplay;
+    @Nullable
+    @BindView(R.id.tv_movie_videos_no_videos_message)
+    TextView mNoVideosMessage;
+    @Nullable
     @BindView(R.id.rv_movie_reviews)
     RecyclerView mMovieReviewsRecyclerView;
     @Nullable
@@ -62,6 +80,7 @@ public class DetailActivity extends AppCompatActivity {
     TextView mNoReviewsMessage;
     private Movie mMovie;
     private TMDBService mService;
+    private MovieVideoAdapter mMovieVideoAdapter;
     private MovieReviewAdapter mMovieReviewAdapter;
 
     @Override
@@ -83,12 +102,12 @@ public class DetailActivity extends AppCompatActivity {
         mCollapsingToolbarLayout.setCollapsedTitleTextColor(Color.WHITE);
 
         if (mMovie.getBackdropPath() != null) {
-            String movieBackdropImageUrl = ApiUtils.getImageUrl(mMovie.getBackdropPath(), "w780");
+            String movieBackdropImageUrl = ApiUtils.getImageStringUrl(mMovie.getBackdropPath(), "w780");
             Picasso.with(this).load(movieBackdropImageUrl).into(mMovieBackdropImageView);
         }
 
         if (mMovie.getPosterPath() != null) {
-            String moviePosterImageUrl = ApiUtils.getImageUrl(mMovie.getPosterPath(), "w500");
+            String moviePosterImageUrl = ApiUtils.getImageStringUrl(mMovie.getPosterPath(), "w500");
             Picasso.with(this).load(moviePosterImageUrl).into(mMoviePosterImageView);
         }
 
@@ -103,18 +122,63 @@ public class DetailActivity extends AppCompatActivity {
         mMovieOriginalTitle.setText(mMovie.getOriginalTitle());
         mMovieOverviewTextView.setText(mMovie.getOverview());
 
+        mMovieVideoAdapter = new MovieVideoAdapter(this, this);
+        mMovieVideosRecyclerView.setLayoutManager(new LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false));
+        mMovieVideosRecyclerView.setAdapter(mMovieVideoAdapter);
+
         mMovieReviewAdapter = new MovieReviewAdapter();
         mMovieReviewsRecyclerView.setLayoutManager(new LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false));
         mMovieReviewsRecyclerView.setAdapter(mMovieReviewAdapter);
 
         if (ApiUtils.isOnline(this)) {
+            mMovieVideosLoadingIndicator.setVisibility(View.VISIBLE);
             mMovieReviewsLoadingIndicator.setVisibility(View.VISIBLE);
+            loadVideos();
             loadReviews();
         } else showErrorMessage();
 
+        ViewCompat.setNestedScrollingEnabled(mMovieVideosRecyclerView, false);
         ViewCompat.setNestedScrollingEnabled(mMovieReviewsRecyclerView, false);
     }
 
+    public void loadVideos() {
+        mService.getVideos(mMovie.getId()).enqueue(new Callback<TMDBMovieVideosResponse>() {
+            @Override
+            public void onResponse(Call<TMDBMovieVideosResponse> call, Response<TMDBMovieVideosResponse> response) {
+                if (response.isSuccessful()) {
+                    mMovieVideosLoadingIndicator.setVisibility(View.INVISIBLE);
+                    mMovieVideoAdapter.setMovieVideoData(response.body().getResults());
+                    showVideos();
+                    Log.d(TAG, "videos loaded from API");
+                } else {
+                    int statusCode = response.code();
+                    // handle request errors depending on status code
+                    Log.v(TAG, "Request error. Status code: " + statusCode);
+                }
+            }
+
+            @Override
+            public void onFailure(Call<TMDBMovieVideosResponse> call, Throwable t) {
+                Log.d(TAG, "error loading from API");
+            }
+        });
+    }
+
+    @Override
+    public void onClick(MovieVideo selectedVideo) {
+        Context context = this;
+        String videoId = selectedVideo.getKey();
+        Uri uri = Uri.parse(ApiUtils.YOUTUBE_BASE_URL).buildUpon().appendQueryParameter("v", videoId).build();
+
+        Intent appIntent = new Intent(Intent.ACTION_VIEW, Uri.parse("vnd.youtube:" + videoId));
+        Intent webIntent = new Intent(Intent.ACTION_VIEW, uri);
+        try {
+            context.startActivity(appIntent);
+        } catch (ActivityNotFoundException e) {
+            context.startActivity(webIntent);
+        }
+
+    }
 
     public void loadReviews() {
         mService.getReviews(mMovie.getId()).enqueue(new Callback<TMDBMovieReviewsResponse>() {
@@ -139,8 +203,18 @@ public class DetailActivity extends AppCompatActivity {
         });
     }
 
+    private void showVideos() {
+        if (mMovieVideoAdapter.getItemCount() == 0) {
+            mMovieVideosRecyclerView.setVisibility(View.GONE);
+            mNoVideosMessage.setVisibility(View.VISIBLE);
+        } else {
+            mMovieVideosRecyclerView.setVisibility(View.VISIBLE);
+            mNoVideosMessage.setVisibility(View.GONE);
+        }
+    }
+
     private void showReviews() {
-        if (mMovieReviewsRecyclerView.getAdapter().getItemCount() == 0) {
+        if (mMovieReviewAdapter.getItemCount() == 0) {
             mMovieReviewsRecyclerView.setVisibility(View.GONE);
             mNoReviewsMessage.setVisibility(View.VISIBLE);
         } else {
@@ -150,6 +224,10 @@ public class DetailActivity extends AppCompatActivity {
     }
 
     private void showErrorMessage() {
+        mMovieVideosLoadingIndicator.setVisibility(View.GONE);
+        mMovieVideosRecyclerView.setVisibility(View.GONE);
+        mMovieVideosErrorMessageDisplay.setVisibility(View.VISIBLE);
+
         mMovieReviewsLoadingIndicator.setVisibility(View.GONE);
         mMovieReviewsRecyclerView.setVisibility(View.GONE);
         mMovieReviewsErrorMessageDisplay.setVisibility(View.VISIBLE);
