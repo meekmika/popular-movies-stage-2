@@ -1,27 +1,35 @@
 package com.example.android.popularmovies2.data.model;
 
-import java.util.List;
 import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
 
-/**
- * Created by mika on 2018-04-16.
- */
+import java.util.List;
 
-public class TMDBResponse {
+public class TMDBMovieReviewsResponse {
 
+    @SerializedName("id")
+    @Expose
+    private int id;
     @SerializedName("page")
     @Expose
     private int page;
     @SerializedName("results")
     @Expose
-    private List<Movie> results = null;
-    @SerializedName("total_results")
-    @Expose
-    private int totalResults;
+    private List<MovieReview> results = null;
     @SerializedName("total_pages")
     @Expose
     private int totalPages;
+    @SerializedName("total_results")
+    @Expose
+    private int totalResults;
+
+    public int getId() {
+        return id;
+    }
+
+    public void setId(int id) {
+        this.id = id;
+    }
 
     public int getPage() {
         return page;
@@ -31,12 +39,20 @@ public class TMDBResponse {
         this.page = page;
     }
 
-    public List<Movie> getResults() {
+    public List<MovieReview> getResults() {
         return results;
     }
 
-    public void setResults(List<Movie> results) {
+    public void setResults(List<MovieReview> results) {
         this.results = results;
+    }
+
+    public int getTotalPages() {
+        return totalPages;
+    }
+
+    public void setTotalPages(int totalPages) {
+        this.totalPages = totalPages;
     }
 
     public int getTotalResults() {
@@ -47,11 +63,4 @@ public class TMDBResponse {
         this.totalResults = totalResults;
     }
 
-    public int getTotalPages() {
-        return totalPages;
-    }
-
-    public void setTotalPages(int totalPages) {
-        this.totalPages = totalPages;
-    }
 }

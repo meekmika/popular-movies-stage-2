@@ -34,6 +34,7 @@
                 android:elevation="4dp"
                 android:theme="@style/ThemeOverlay.AppCompat.ActionBar"
                 app:layout_collapseMode="pin"
+                app:layout_scrollFlags="scroll|enterAlways"
                 app:popupTheme="@style/ThemeOverlay.AppCompat.Light"
                 app:titleTextColor="@android:color/white" />
 
@@ -49,6 +50,7 @@
         app:layout_behavior="@string/appbar_scrolling_view_behavior">
 
         <LinearLayout
+            android:id="@+id/content_container"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
@@ -89,7 +91,7 @@
                             android:layout_marginRight="2dp"
                             android:textColor="@android:color/white"
                             android:textSize="@dimen/text_sz_large"
-                            tools:text="8.1/10" />
+                            tools:text="5.0/7" />
 
                     </LinearLayout>
 
@@ -107,7 +109,7 @@
                         android:layout_marginBottom="@dimen/margin_large"
                         android:textSize="@dimen/text_sz_large"
                         android:textStyle="italic"
-                        tools:text="2018" />
+                        tools:text="1999" />
 
 
                     <TextView
@@ -123,7 +125,7 @@
                         android:layout_height="wrap_content"
                         android:paddingRight="@dimen/margin_large"
                         android:textSize="@dimen/text_sz_extra_large"
-                        tools:text="Ready Player One" />
+                        tools:text="Fight Club" />
 
                 </LinearLayout>
 
@@ -149,8 +151,70 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="@dimen/margin_large"
-                android:textSize="@dimen/text_sz_medium"
-                android:layout_marginTop="@dimen/margin_medium" />
+                android:layout_marginTop="@dimen/margin_medium"
+                android:textSize="@dimen/text_sz_medium" />
+
+            <include layout="@layout/divider" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/reviews"
+                android:textSize="@dimen/text_sz_large" />
+
+
+            <FrameLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/margin_medium">
+
+                <ProgressBar
+                    android:id="@+id/pb_movie_reviews_loading_indicator"
+                    android:layout_width="@dimen/loading_indicator_size"
+                    android:layout_height="@dimen/loading_indicator_size"
+                    android:layout_gravity="center" />
+
+                <android.support.v7.widget.RecyclerView
+                    android:id="@+id/rv_movie_reviews"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:visibility="visible"
+                    tools:listitem="@layout/movie_review_list_item" />
+
+                <TextView
+                    android:id="@+id/tv_movie_reviews_no_reviews_message"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/no_reviews_message"
+                    android:textColor="@color/colorBlackTranslucent"
+                    android:textSize="@dimen/text_sz_medium"
+                    android:textStyle="italic"
+                    android:visibility="gone" />
+
+                <LinearLayout
+                    android:id="@+id/movie_reviews_error_message_display"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:gravity="center"
+                    android:orientation="vertical"
+                    android:visibility="invisible">
+
+                    <ImageView
+                        android:layout_width="wrap_content"
+                        android:layout_height="@dimen/no_connection_image_small"
+                        android:layout_marginBottom="@dimen/margin_small"
+                        android:src="@drawable/no_connection" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/error_message_reviews"
+                        android:textAlignment="center" />
+
+                </LinearLayout>
+            </FrameLayout>
+
 
         </LinearLayout>
 

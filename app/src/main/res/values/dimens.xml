@@ -1,18 +1,22 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <dimen name="movie_backdrop_image_height">240dp</dimen>
-    
+
     <dimen name="margin_small">4dp</dimen>
     <dimen name="margin_medium">8dp</dimen>
     <dimen name="margin_large">16dp</dimen>
 
     <dimen name="text_sz_small">12sp</dimen>
-    <dimen name="text_sz_medium">16dp</dimen>
-    <dimen name="text_sz_large">18dp</dimen>
+    <dimen name="text_sz_medium">16sp</dimen>
+    <dimen name="text_sz_large">18sp</dimen>
     <dimen name="text_sz_extra_large">22sp</dimen>
 
     <dimen name="star_icon_size">18dp</dimen>
     <dimen name="details_section_min_height">240dp</dimen>
     <dimen name="movie_poster_width">160dp</dimen>
     <dimen name="movie_poster_height">240dp</dimen>
+    <dimen name="divider_height">1dp</dimen>
+    <dimen name="loading_indicator_size">42dp</dimen>
+    <dimen name="no_connection_image_big">60dp</dimen>
+    <dimen name="no_connection_image_small">30dp</dimen>
 </resources>

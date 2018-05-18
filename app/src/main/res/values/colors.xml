@@ -7,4 +7,5 @@
 
     <color name="colorTextShadow">#7F000000</color>
     <color name="colorBlackTranslucent">#32000000</color>
+    <color name="colorLightGray">#e7e7e7</color>
 </resources>

@@ -36,11 +36,10 @@ public class MoviePosterAdapter extends RecyclerView.Adapter<MoviePosterAdapter.
     @Override
     public MoviePosterViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
         Context context = parent.getContext();
-        int layoutIdForListItem = R.layout.movie_poster_grid_item;
+        int layoutIdForGridItem = R.layout.movie_poster_grid_item;
         LayoutInflater inflater = LayoutInflater.from(context);
-        boolean shouldAttachToParentImmediately = false;
 
-        View view = inflater.inflate(layoutIdForListItem, parent, shouldAttachToParentImmediately);
+        View view = inflater.inflate(layoutIdForGridItem, parent, false);
         return new MoviePosterViewHolder(view);
     }
 
@@ -74,7 +73,7 @@ public class MoviePosterAdapter extends RecyclerView.Adapter<MoviePosterAdapter.
         @BindView(R.id.iv_movie_poster)
         ImageView mMoviePosterImageView;
 
-        public MoviePosterViewHolder(View view) {
+        MoviePosterViewHolder(View view) {
             super(view);
             ButterKnife.bind(this, view);
             view.setOnClickListener(this);

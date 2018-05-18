@@ -1,5 +1,9 @@
 package com.example.android.popularmovies2.utils;
 
+import android.content.Context;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
+
 import com.example.android.popularmovies2.data.remote.RetrofitClient;
 import com.example.android.popularmovies2.data.remote.TMDBService;
 
@@ -17,5 +21,11 @@ public class ApiUtils {
 
     public static String getImageUrl(String posterPath, String imageSize) {
         return IMAGE_BASE_URL + "/" + imageSize + posterPath;
+    }
+
+    public static boolean isOnline(Context context) {
+        ConnectivityManager cm = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo netInfo = cm.getActiveNetworkInfo();
+        return netInfo != null && netInfo.isConnectedOrConnecting();
     }
 }

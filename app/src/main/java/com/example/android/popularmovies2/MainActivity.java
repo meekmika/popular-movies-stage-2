@@ -3,10 +3,7 @@ package com.example.android.popularmovies2;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.net.ConnectivityManager;
-import android.net.NetworkInfo;
 import android.os.Bundle;
-import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.preference.PreferenceManager;
 import android.support.v7.widget.GridLayoutManager;
@@ -21,7 +18,7 @@ import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 
 import com.example.android.popularmovies2.data.model.Movie;
-import com.example.android.popularmovies2.data.model.TMDBResponse;
+import com.example.android.popularmovies2.data.model.TMDBMoviesResponse;
 import com.example.android.popularmovies2.data.remote.TMDBService;
 import com.example.android.popularmovies2.utils.ApiUtils;
 
@@ -36,14 +33,10 @@ public class MainActivity extends AppCompatActivity implements
         MoviePosterAdapter.MovieAdapterOnClickHandler {
 
     private static final String TAG = MainActivity.class.getSimpleName();
-    private static boolean PREFERENCES_HAS_BEEN_CHANGED = false;
-    @Nullable
     @BindView(R.id.rv_movies)
     RecyclerView mRecyclerView;
-    @Nullable
     @BindView(R.id.error_message_display)
     LinearLayout mErrorMessageDisplay;
-    @Nullable
     @BindView(R.id.pb_loading_indicator)
     ProgressBar mLoadingIndicator;
     private TMDBService mService;
@@ -66,23 +59,23 @@ public class MainActivity extends AppCompatActivity implements
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
         String prefSortOrder = prefs.getString(getString(R.string.pref_sort_order_key), getString(R.string.pref_sort_order_popular));
 
-        if (isOnline()) {
+        if (ApiUtils.isOnline(this)) {
             mLoadingIndicator.setVisibility(View.VISIBLE);
-            loadAnswers(prefSortOrder);
-            showData();
+            loadMovies(prefSortOrder);
+            showMovies();
         } else showErrorMessage();
 
         PreferenceManager.getDefaultSharedPreferences(this).registerOnSharedPreferenceChangeListener(this);
     }
 
-    public void loadAnswers(String sortOrder) {
-        mService.getMovies(sortOrder).enqueue(new Callback<TMDBResponse>() {
+    public void loadMovies(String sortOrder) {
+        mService.getMovies(sortOrder).enqueue(new Callback<TMDBMoviesResponse>() {
             @Override
-            public void onResponse(Call<TMDBResponse> call, Response<TMDBResponse> response) {
+            public void onResponse(Call<TMDBMoviesResponse> call, Response<TMDBMoviesResponse> response) {
                 if (response.isSuccessful()) {
                     mLoadingIndicator.setVisibility(View.INVISIBLE);
                     mAdapter.setMovieData(response.body().getResults());
-                    Log.d(TAG, "posts loaded from API");
+                    Log.d(TAG, "moviews loaded from API");
                 } else {
                     int statusCode = response.code();
                     // handle request errors depending on status code
@@ -91,16 +84,10 @@ public class MainActivity extends AppCompatActivity implements
             }
 
             @Override
-            public void onFailure(Call<TMDBResponse> call, Throwable t) {
+            public void onFailure(Call<TMDBMoviesResponse> call, Throwable t) {
                 Log.d(TAG, "error loading from API");
             }
         });
-    }
-
-    public boolean isOnline() {
-        ConnectivityManager cm = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
-        NetworkInfo netInfo = cm.getActiveNetworkInfo();
-        return netInfo != null && netInfo.isConnectedOrConnecting();
     }
 
     private int numberOfColumns() {
@@ -128,7 +115,7 @@ public class MainActivity extends AppCompatActivity implements
         mRecyclerView.setVisibility(View.INVISIBLE);
     }
 
-    private void showData() {
+    private void showMovies() {
         mErrorMessageDisplay.setVisibility(View.GONE);
         mRecyclerView.setVisibility(View.VISIBLE);
     }
@@ -155,17 +142,8 @@ public class MainActivity extends AppCompatActivity implements
 
     @Override
     public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
-        PREFERENCES_HAS_BEEN_CHANGED = true;
         if (key.equals(getString(R.string.pref_sort_order_key))) {
-            loadAnswers(sharedPreferences.getString(getString(R.string.pref_sort_order_key), getString(R.string.pref_sort_order_popular)));
-        }
-    }
-
-    @Override
-    protected void onStart() {
-        super.onStart();
-        if (PREFERENCES_HAS_BEEN_CHANGED) {
-            PREFERENCES_HAS_BEEN_CHANGED = false;
+            loadMovies(sharedPreferences.getString(getString(R.string.pref_sort_order_key), getString(R.string.pref_sort_order_popular)));
         }
     }
 

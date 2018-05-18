@@ -3,15 +3,28 @@ package com.example.android.popularmovies2.data.model;
 import android.os.Parcel;
 import android.os.Parcelable;
 
-import java.util.List;
 import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
+
+import java.util.List;
 
 /**
  * Created by mika on 2018-04-16.
  */
 
 public class Movie implements Parcelable {
+
+    public static final Creator<Movie> CREATOR = new Creator<Movie>() {
+        @Override
+        public Movie createFromParcel(Parcel in) {
+            return new Movie(in);
+        }
+
+        @Override
+        public Movie[] newArray(int size) {
+            return new Movie[size];
+        }
+    };
 
     @SerializedName("poster_path")
     @Expose
@@ -71,18 +84,6 @@ public class Movie implements Parcelable {
         video = in.readByte() != 0;
         voteAverage = in.readDouble();
     }
-
-    public static final Creator<Movie> CREATOR = new Creator<Movie>() {
-        @Override
-        public Movie createFromParcel(Parcel in) {
-            return new Movie(in);
-        }
-
-        @Override
-        public Movie[] newArray(int size) {
-            return new Movie[size];
-        }
-    };
 
     public String getPosterPath() {
         return posterPath;
