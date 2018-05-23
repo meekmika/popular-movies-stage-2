@@ -19,4 +19,6 @@
     <dimen name="loading_indicator_size">42dp</dimen>
     <dimen name="no_connection_image_big">60dp</dimen>
     <dimen name="no_connection_image_small">30dp</dimen>
+    <dimen name="video_thumbnail_width">250dp</dimen>
+    <dimen name="video_thumbnail_height">160dp</dimen>
 </resources>

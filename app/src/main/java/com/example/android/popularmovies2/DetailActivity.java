@@ -3,6 +3,7 @@ package com.example.android.popularmovies2;
 import android.content.ActivityNotFoundException;
 import android.content.Context;
 import android.content.Intent;
+import android.databinding.DataBindingUtil;
 import android.graphics.Color;
 import android.net.Uri;
 import android.os.Bundle;
@@ -24,6 +25,7 @@ import com.example.android.popularmovies2.data.model.MovieVideo;
 import com.example.android.popularmovies2.data.model.TMDBMovieReviewsResponse;
 import com.example.android.popularmovies2.data.model.TMDBMovieVideosResponse;
 import com.example.android.popularmovies2.data.remote.TMDBService;
+import com.example.android.popularmovies2.databinding.ActivityDetailBinding;
 import com.example.android.popularmovies2.utils.ApiUtils;
 import com.squareup.picasso.Picasso;
 
@@ -37,108 +39,69 @@ import retrofit2.Response;
 
 public class DetailActivity extends AppCompatActivity implements MovieVideoAdapter.MovieVideoAdapterOnClickHandler {
 
-    private static final String TAG = MainActivity.class.getSimpleName();
-    @BindView(R.id.iv_movie_backdrop)
-    ImageView mMovieBackdropImageView;
-    @BindView(R.id.iv_movie_poster)
-    ImageView mMoviePosterImageView;
-    @BindView(R.id.tv_movie_release_date)
-    TextView mMovieReleaseDateTextView;
-    @BindView(R.id.tv_movie_rating)
-    TextView mMovieRatingTextView;
-    @BindView(R.id.tv_movie_original_title)
-    TextView mMovieOriginalTitle;
-    @BindView(R.id.tv_movie_overview)
-    TextView mMovieOverviewTextView;
-    @BindView(R.id.collapsing_toolbar_layout)
-    CollapsingToolbarLayout mCollapsingToolbarLayout;
-    @BindView(R.id.detail_toolbar)
-    Toolbar mToolbar;
-    @Nullable
-    @BindView(R.id.rv_movie_videos)
-    RecyclerView mMovieVideosRecyclerView;
-    @Nullable
-    @BindView(R.id.pb_movie_videos_loading_indicator)
-    ProgressBar mMovieVideosLoadingIndicator;
-    @Nullable
-    @BindView(R.id.movie_videos_error_message_display)
-    LinearLayout mMovieVideosErrorMessageDisplay;
-    @Nullable
-    @BindView(R.id.tv_movie_videos_no_videos_message)
-    TextView mNoVideosMessage;
-    @Nullable
-    @BindView(R.id.rv_movie_reviews)
-    RecyclerView mMovieReviewsRecyclerView;
-    @Nullable
-    @BindView(R.id.pb_movie_reviews_loading_indicator)
-    ProgressBar mMovieReviewsLoadingIndicator;
-    @Nullable
-    @BindView(R.id.movie_reviews_error_message_display)
-    LinearLayout mMovieReviewsErrorMessageDisplay;
-    @Nullable
-    @BindView(R.id.tv_movie_reviews_no_reviews_message)
-    TextView mNoReviewsMessage;
+    private static final String TAG = DetailActivity.class.getSimpleName();
     private Movie mMovie;
     private TMDBService mService;
     private MovieVideoAdapter mMovieVideoAdapter;
     private MovieReviewAdapter mMovieReviewAdapter;
+    ActivityDetailBinding mDetailBinding;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_detail);
-        ButterKnife.bind(this);
+        mDetailBinding = DataBindingUtil.setContentView(this, R.layout.activity_detail);
 
-        mToolbar.setNavigationIcon(R.drawable.ic_arrow_back_white_24dp);
-        setSupportActionBar(mToolbar);
+        mDetailBinding.detailToolbar.setNavigationIcon(R.drawable.ic_arrow_back_white_24dp);
+        setSupportActionBar(mDetailBinding.detailToolbar);
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 
         mService = ApiUtils.getTMDBService();
 
         mMovie = getIntent().getParcelableExtra(getString(R.string.movie_key));
 
-        mCollapsingToolbarLayout.setTitle(mMovie.getTitle());
-        mCollapsingToolbarLayout.setExpandedTitleTextAppearance(R.style.ExpandedTitleTextStyle);
-        mCollapsingToolbarLayout.setCollapsedTitleTextColor(Color.WHITE);
+        mDetailBinding.collapsingToolbarLayout.setTitle(mMovie.getTitle());
+        mDetailBinding.collapsingToolbarLayout.setExpandedTitleTextAppearance(R.style.ExpandedTitleTextStyle);
+        mDetailBinding.collapsingToolbarLayout.setCollapsedTitleTextColor(Color.WHITE);
 
         if (mMovie.getBackdropPath() != null) {
             String movieBackdropImageUrl = ApiUtils.getImageStringUrl(mMovie.getBackdropPath(), "w780");
-            Picasso.with(this).load(movieBackdropImageUrl).into(mMovieBackdropImageView);
+            Picasso.with(this).load(movieBackdropImageUrl).into(mDetailBinding.ivMovieBackdrop);
         }
 
         if (mMovie.getPosterPath() != null) {
             String moviePosterImageUrl = ApiUtils.getImageStringUrl(mMovie.getPosterPath(), "w500");
-            Picasso.with(this).load(moviePosterImageUrl).into(mMoviePosterImageView);
+            Picasso.with(this).load(moviePosterImageUrl).into(mDetailBinding.ivMoviePoster);
         }
 
         String releaseDate = mMovie.getReleaseDate();
         String releaseYear = releaseDate.substring(0, 4);
-        mMovieReleaseDateTextView.setText(releaseYear);
+        mDetailBinding.tvMovieReleaseDate.setText(releaseYear);
 
         String rating = Double.toString(mMovie.getVoteAverage());
         rating += "/10";
-        mMovieRatingTextView.setText(rating);
+        mDetailBinding.tvMovieRating.setText(rating);
 
-        mMovieOriginalTitle.setText(mMovie.getOriginalTitle());
-        mMovieOverviewTextView.setText(mMovie.getOverview());
+        mDetailBinding.tvMovieOriginalTitle.setText(mMovie.getOriginalTitle());
+       mDetailBinding.tvMovieOverview.setText(mMovie.getOverview());
 
         mMovieVideoAdapter = new MovieVideoAdapter(this, this);
-        mMovieVideosRecyclerView.setLayoutManager(new LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false));
-        mMovieVideosRecyclerView.setAdapter(mMovieVideoAdapter);
+        mDetailBinding.rvMovieVideos.setLayoutManager(new LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false));
+        mDetailBinding.rvMovieVideos.setAdapter(mMovieVideoAdapter);
 
         mMovieReviewAdapter = new MovieReviewAdapter();
-        mMovieReviewsRecyclerView.setLayoutManager(new LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false));
-        mMovieReviewsRecyclerView.setAdapter(mMovieReviewAdapter);
+        mDetailBinding.rvMovieReviews.setLayoutManager(new LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false));
+        mDetailBinding.rvMovieReviews.setAdapter(mMovieReviewAdapter);
 
         if (ApiUtils.isOnline(this)) {
-            mMovieVideosLoadingIndicator.setVisibility(View.VISIBLE);
-            mMovieReviewsLoadingIndicator.setVisibility(View.VISIBLE);
+            mDetailBinding.pbMovieVideosLoadingIndicator.setVisibility(View.VISIBLE);
+            mDetailBinding.pbMovieReviewsLoadingIndicator.setVisibility(View.VISIBLE);
             loadVideos();
             loadReviews();
         } else showErrorMessage();
 
-        ViewCompat.setNestedScrollingEnabled(mMovieVideosRecyclerView, false);
-        ViewCompat.setNestedScrollingEnabled(mMovieReviewsRecyclerView, false);
+        ViewCompat.setNestedScrollingEnabled(mDetailBinding.rvMovieReviews, false);
+        ViewCompat.setNestedScrollingEnabled(mDetailBinding.rvMovieVideos, false);
     }
 
     public void loadVideos() {
@@ -146,7 +109,7 @@ public class DetailActivity extends AppCompatActivity implements MovieVideoAdapt
             @Override
             public void onResponse(Call<TMDBMovieVideosResponse> call, Response<TMDBMovieVideosResponse> response) {
                 if (response.isSuccessful()) {
-                    mMovieVideosLoadingIndicator.setVisibility(View.INVISIBLE);
+                    mDetailBinding.pbMovieVideosLoadingIndicator.setVisibility(View.INVISIBLE);
                     mMovieVideoAdapter.setMovieVideoData(response.body().getResults());
                     showVideos();
                     Log.d(TAG, "videos loaded from API");
@@ -185,7 +148,7 @@ public class DetailActivity extends AppCompatActivity implements MovieVideoAdapt
             @Override
             public void onResponse(Call<TMDBMovieReviewsResponse> call, Response<TMDBMovieReviewsResponse> response) {
                 if (response.isSuccessful()) {
-                    mMovieReviewsLoadingIndicator.setVisibility(View.INVISIBLE);
+                    mDetailBinding.pbMovieReviewsLoadingIndicator.setVisibility(View.INVISIBLE);
                     mMovieReviewAdapter.setMovieReviewsData(response.body().getResults());
                     showReviews();
                     Log.d(TAG, "reviews loaded from API");
@@ -205,32 +168,32 @@ public class DetailActivity extends AppCompatActivity implements MovieVideoAdapt
 
     private void showVideos() {
         if (mMovieVideoAdapter.getItemCount() == 0) {
-            mMovieVideosRecyclerView.setVisibility(View.GONE);
-            mNoVideosMessage.setVisibility(View.VISIBLE);
+            mDetailBinding.rvMovieVideos.setVisibility(View.GONE);
+            mDetailBinding.tvMovieVideosNoVideosMessage.setVisibility(View.VISIBLE);
         } else {
-            mMovieVideosRecyclerView.setVisibility(View.VISIBLE);
-            mNoVideosMessage.setVisibility(View.GONE);
+            mDetailBinding.rvMovieVideos.setVisibility(View.VISIBLE);
+            mDetailBinding.tvMovieVideosNoVideosMessage.setVisibility(View.GONE);
         }
     }
 
     private void showReviews() {
         if (mMovieReviewAdapter.getItemCount() == 0) {
-            mMovieReviewsRecyclerView.setVisibility(View.GONE);
-            mNoReviewsMessage.setVisibility(View.VISIBLE);
+            mDetailBinding.rvMovieReviews.setVisibility(View.GONE);
+            mDetailBinding.tvMovieReviewsNoReviewsMessage.setVisibility(View.VISIBLE);
         } else {
-            mMovieReviewsRecyclerView.setVisibility(View.VISIBLE);
-            mNoReviewsMessage.setVisibility(View.GONE);
+            mDetailBinding.rvMovieReviews.setVisibility(View.VISIBLE);
+            mDetailBinding.tvMovieReviewsNoReviewsMessage.setVisibility(View.GONE);
         }
     }
 
     private void showErrorMessage() {
-        mMovieVideosLoadingIndicator.setVisibility(View.GONE);
-        mMovieVideosRecyclerView.setVisibility(View.GONE);
-        mMovieVideosErrorMessageDisplay.setVisibility(View.VISIBLE);
+        mDetailBinding.pbMovieVideosLoadingIndicator.setVisibility(View.GONE);
+        mDetailBinding.rvMovieVideos.setVisibility(View.GONE);
+        mDetailBinding.movieVideosErrorMessageDisplay.setVisibility(View.VISIBLE);
 
-        mMovieReviewsLoadingIndicator.setVisibility(View.GONE);
-        mMovieReviewsRecyclerView.setVisibility(View.GONE);
-        mMovieReviewsErrorMessageDisplay.setVisibility(View.VISIBLE);
+        mDetailBinding.pbMovieReviewsLoadingIndicator.setVisibility(View.GONE);
+        mDetailBinding.rvMovieReviews.setVisibility(View.GONE);
+        mDetailBinding.movieReviewsErrorMessageDisplay.setVisibility(View.VISIBLE);
     }
 
 
