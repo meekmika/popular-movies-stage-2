@@ -10,13 +10,13 @@ import android.widget.TextView;
 
 import com.example.android.popularmovies2.data.model.MovieReview;
 
-import java.util.List;
+import java.util.ArrayList;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
 
 public class MovieReviewAdapter extends RecyclerView.Adapter<MovieReviewAdapter.MovieReviewViewHolder> {
-    private List<MovieReview> mMovieReviews;
+    private ArrayList<MovieReview> mMovieReviews;
 
     @NonNull
     @Override
@@ -43,7 +43,7 @@ public class MovieReviewAdapter extends RecyclerView.Adapter<MovieReviewAdapter.
         return mMovieReviews.size();
     }
 
-    public void setMovieReviewsData(List<MovieReview> movieReviewData) {
+    public void setMovieReviewsData(ArrayList<MovieReview> movieReviewData) {
         mMovieReviews = movieReviewData;
         notifyDataSetChanged();
     }

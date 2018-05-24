@@ -3,7 +3,6 @@ package com.example.android.popularmovies2;
 import android.content.Context;
 import android.support.annotation.NonNull;
 import android.support.v7.widget.RecyclerView;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -13,7 +12,7 @@ import com.example.android.popularmovies2.data.model.MovieVideo;
 import com.example.android.popularmovies2.utils.ApiUtils;
 import com.squareup.picasso.Picasso;
 
-import java.util.List;
+import java.util.ArrayList;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
@@ -21,7 +20,7 @@ import butterknife.ButterKnife;
 
 public class MovieVideoAdapter extends RecyclerView.Adapter<MovieVideoAdapter.MovieVideoViewHolder> {
     private final MovieVideoAdapterOnClickHandler mClickHandler;
-    private List<MovieVideo> mMovieVideos;
+    private ArrayList<MovieVideo> mMovieVideos;
     private Context mContext;
 
     public MovieVideoAdapter(Context context, MovieVideoAdapter.MovieVideoAdapterOnClickHandler clickHandler) {
@@ -55,7 +54,7 @@ public class MovieVideoAdapter extends RecyclerView.Adapter<MovieVideoAdapter.Mo
         return mMovieVideos.size();
     }
 
-    public void setMovieVideoData(List<MovieVideo> movieVideoData) {
+    public void setMovieVideoData(ArrayList<MovieVideo> movieVideoData) {
         mMovieVideos = movieVideoData;
         notifyDataSetChanged();
     }
@@ -76,7 +75,6 @@ public class MovieVideoAdapter extends RecyclerView.Adapter<MovieVideoAdapter.Mo
 
         @Override
         public void onClick(View v) {
-            Log.v("YO", "YOYO");
             int adapterPosition = getAdapterPosition();
             mClickHandler.onClick(mMovieVideos.get(adapterPosition));
         }

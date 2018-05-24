@@ -7,20 +7,14 @@ import android.databinding.DataBindingUtil;
 import android.graphics.Color;
 import android.net.Uri;
 import android.os.Bundle;
-import android.support.annotation.Nullable;
 import android.support.v4.view.ViewCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
-import android.support.v7.widget.RecyclerView;
-import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.View;
-import android.widget.ImageView;
-import android.widget.LinearLayout;
-import android.widget.ProgressBar;
-import android.widget.TextView;
 
 import com.example.android.popularmovies2.data.model.Movie;
+import com.example.android.popularmovies2.data.model.MovieReview;
 import com.example.android.popularmovies2.data.model.MovieVideo;
 import com.example.android.popularmovies2.data.model.TMDBMovieReviewsResponse;
 import com.example.android.popularmovies2.data.model.TMDBMovieVideosResponse;
@@ -29,10 +23,8 @@ import com.example.android.popularmovies2.databinding.ActivityDetailBinding;
 import com.example.android.popularmovies2.utils.ApiUtils;
 import com.squareup.picasso.Picasso;
 
-import net.opacapp.multilinecollapsingtoolbar.CollapsingToolbarLayout;
+import java.util.ArrayList;
 
-import butterknife.BindView;
-import butterknife.ButterKnife;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
@@ -40,11 +32,15 @@ import retrofit2.Response;
 public class DetailActivity extends AppCompatActivity implements MovieVideoAdapter.MovieVideoAdapterOnClickHandler {
 
     private static final String TAG = DetailActivity.class.getSimpleName();
+    private static final String MOVIE_VIDEOS_RESULTS = "movie-videos-results";
+    private static final String MOVIE_REVIEWS_RESULTS = "movie-reviews-results";
+    ActivityDetailBinding mDetailBinding;
     private Movie mMovie;
+    private ArrayList<MovieVideo> mVideos;
+    private ArrayList<MovieReview> mReviews;
     private TMDBService mService;
     private MovieVideoAdapter mMovieVideoAdapter;
     private MovieReviewAdapter mMovieReviewAdapter;
-    ActivityDetailBinding mDetailBinding;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -83,7 +79,7 @@ public class DetailActivity extends AppCompatActivity implements MovieVideoAdapt
         mDetailBinding.tvMovieRating.setText(rating);
 
         mDetailBinding.tvMovieOriginalTitle.setText(mMovie.getOriginalTitle());
-       mDetailBinding.tvMovieOverview.setText(mMovie.getOverview());
+        mDetailBinding.tvMovieOverview.setText(mMovie.getOverview());
 
         mMovieVideoAdapter = new MovieVideoAdapter(this, this);
         mDetailBinding.rvMovieVideos.setLayoutManager(new LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false));
@@ -93,24 +89,45 @@ public class DetailActivity extends AppCompatActivity implements MovieVideoAdapt
         mDetailBinding.rvMovieReviews.setLayoutManager(new LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false));
         mDetailBinding.rvMovieReviews.setAdapter(mMovieReviewAdapter);
 
+        if (savedInstanceState != null) {
+            mVideos = savedInstanceState.getParcelableArrayList(MOVIE_VIDEOS_RESULTS);
+            mReviews = savedInstanceState.getParcelableArrayList(MOVIE_REVIEWS_RESULTS);
+            mMovieVideoAdapter.setMovieVideoData(mVideos);
+            showVideos();
+            mMovieReviewAdapter.setMovieReviewsData(mReviews);
+            showReviews();
+        }
+
         if (ApiUtils.isOnline(this)) {
-            mDetailBinding.pbMovieVideosLoadingIndicator.setVisibility(View.VISIBLE);
-            mDetailBinding.pbMovieReviewsLoadingIndicator.setVisibility(View.VISIBLE);
-            loadVideos();
-            loadReviews();
+            if (mVideos == null) {
+                Log.v(TAG, "loading videos");
+                loadVideos();
+            }
+            if (mReviews == null) loadReviews();
+
         } else showErrorMessage();
 
         ViewCompat.setNestedScrollingEnabled(mDetailBinding.rvMovieReviews, false);
         ViewCompat.setNestedScrollingEnabled(mDetailBinding.rvMovieVideos, false);
     }
 
+    @Override
+    protected void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+        outState.putParcelableArrayList(MOVIE_VIDEOS_RESULTS, mVideos);
+        outState.putParcelableArrayList(MOVIE_REVIEWS_RESULTS, mReviews);
+
+    }
+
     public void loadVideos() {
+        mDetailBinding.pbMovieVideosLoadingIndicator.setVisibility(View.VISIBLE);
         mService.getVideos(mMovie.getId()).enqueue(new Callback<TMDBMovieVideosResponse>() {
             @Override
             public void onResponse(Call<TMDBMovieVideosResponse> call, Response<TMDBMovieVideosResponse> response) {
                 if (response.isSuccessful()) {
                     mDetailBinding.pbMovieVideosLoadingIndicator.setVisibility(View.INVISIBLE);
-                    mMovieVideoAdapter.setMovieVideoData(response.body().getResults());
+                    mVideos = (ArrayList<MovieVideo>) response.body().getResults();
+                    mMovieVideoAdapter.setMovieVideoData(mVideos);
                     showVideos();
                     Log.d(TAG, "videos loaded from API");
                 } else {
@@ -144,12 +161,14 @@ public class DetailActivity extends AppCompatActivity implements MovieVideoAdapt
     }
 
     public void loadReviews() {
+        mDetailBinding.pbMovieReviewsLoadingIndicator.setVisibility(View.VISIBLE);
         mService.getReviews(mMovie.getId()).enqueue(new Callback<TMDBMovieReviewsResponse>() {
             @Override
             public void onResponse(Call<TMDBMovieReviewsResponse> call, Response<TMDBMovieReviewsResponse> response) {
                 if (response.isSuccessful()) {
                     mDetailBinding.pbMovieReviewsLoadingIndicator.setVisibility(View.INVISIBLE);
-                    mMovieReviewAdapter.setMovieReviewsData(response.body().getResults());
+                    mReviews = (ArrayList<MovieReview>) response.body().getResults();
+                    mMovieReviewAdapter.setMovieReviewsData(mReviews);
                     showReviews();
                     Log.d(TAG, "reviews loaded from API");
                 } else {

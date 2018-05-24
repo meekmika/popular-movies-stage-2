@@ -22,6 +22,8 @@ import com.example.android.popularmovies2.data.model.TMDBMoviesResponse;
 import com.example.android.popularmovies2.data.remote.TMDBService;
 import com.example.android.popularmovies2.utils.ApiUtils;
 
+import java.util.ArrayList;
+
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import retrofit2.Call;
@@ -33,6 +35,9 @@ public class MainActivity extends AppCompatActivity implements
         MoviePosterAdapter.MoviePosterAdapterOnClickHandler {
 
     private static final String TAG = MainActivity.class.getSimpleName();
+    private static final String MOVIES_RESULT = "movies-result";
+
+
     @BindView(R.id.rv_movies)
     RecyclerView mRecyclerView;
     @BindView(R.id.error_message_display)
@@ -41,6 +46,7 @@ public class MainActivity extends AppCompatActivity implements
     ProgressBar mLoadingIndicator;
     private TMDBService mService;
     private MoviePosterAdapter mAdapter;
+    private ArrayList<Movie> mMovies;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -59,9 +65,13 @@ public class MainActivity extends AppCompatActivity implements
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
         String prefSortOrder = prefs.getString(getString(R.string.pref_sort_order_key), getString(R.string.pref_sort_order_popular));
 
+        if (savedInstanceState != null) {
+            mMovies = savedInstanceState.getParcelableArrayList(MOVIES_RESULT);
+            mAdapter.setMovieData(mMovies);
+        }
+
         if (ApiUtils.isOnline(this)) {
-            mLoadingIndicator.setVisibility(View.VISIBLE);
-            loadMovies(prefSortOrder);
+            if (mMovies == null) loadMovies(prefSortOrder);
             showMovies();
         } else showErrorMessage();
 
@@ -69,13 +79,15 @@ public class MainActivity extends AppCompatActivity implements
     }
 
     public void loadMovies(String sortOrder) {
+        mLoadingIndicator.setVisibility(View.VISIBLE);
         mService.getMovies(sortOrder).enqueue(new Callback<TMDBMoviesResponse>() {
             @Override
             public void onResponse(Call<TMDBMoviesResponse> call, Response<TMDBMoviesResponse> response) {
                 if (response.isSuccessful()) {
                     mLoadingIndicator.setVisibility(View.INVISIBLE);
-                    mAdapter.setMovieData(response.body().getResults());
-                    Log.d(TAG, "moviews loaded from API");
+                    mMovies = (ArrayList<Movie>) response.body().getResults();
+                    mAdapter.setMovieData(mMovies);
+                    Log.d(TAG, "movies loaded from API");
                 } else {
                     int statusCode = response.code();
                     // handle request errors depending on status code
@@ -88,6 +100,12 @@ public class MainActivity extends AppCompatActivity implements
                 Log.d(TAG, "error loading from API");
             }
         });
+    }
+
+    @Override
+    protected void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+        outState.putParcelableArrayList(MOVIES_RESULT, mMovies);
     }
 
     private int numberOfColumns() {

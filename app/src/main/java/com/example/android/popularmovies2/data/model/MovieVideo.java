@@ -1,10 +1,24 @@
 package com.example.android.popularmovies2.data.model;
 
+import android.os.Parcel;
+import android.os.Parcelable;
+
 import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
 
-public class MovieVideo {
+public class MovieVideo implements Parcelable {
 
+    public static final Creator<MovieVideo> CREATOR = new Creator<MovieVideo>() {
+        @Override
+        public MovieVideo createFromParcel(Parcel in) {
+            return new MovieVideo(in);
+        }
+
+        @Override
+        public MovieVideo[] newArray(int size) {
+            return new MovieVideo[size];
+        }
+    };
     @SerializedName("id")
     @Expose
     private String id;
@@ -29,6 +43,17 @@ public class MovieVideo {
     @SerializedName("type")
     @Expose
     private String type;
+
+    protected MovieVideo(Parcel in) {
+        id = in.readString();
+        iso6391 = in.readString();
+        iso31661 = in.readString();
+        key = in.readString();
+        name = in.readString();
+        site = in.readString();
+        size = in.readInt();
+        type = in.readString();
+    }
 
     public String getId() {
         return id;
@@ -94,4 +119,20 @@ public class MovieVideo {
         this.type = type;
     }
 
+    @Override
+    public int describeContents() {
+        return 0;
+    }
+
+    @Override
+    public void writeToParcel(Parcel dest, int flags) {
+        dest.writeString(id);
+        dest.writeString(iso6391);
+        dest.writeString(iso31661);
+        dest.writeString(key);
+        dest.writeString(name);
+        dest.writeString(site);
+        dest.writeInt(size);
+        dest.writeString(type);
+    }
 }
