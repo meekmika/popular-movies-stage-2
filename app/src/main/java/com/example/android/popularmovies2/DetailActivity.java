@@ -1,8 +1,10 @@
 package com.example.android.popularmovies2;
 
 import android.content.ActivityNotFoundException;
+import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
+import android.database.Cursor;
 import android.databinding.DataBindingUtil;
 import android.graphics.Color;
 import android.net.Uri;
@@ -12,7 +14,9 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.util.Log;
 import android.view.View;
+import android.widget.Toast;
 
+import com.example.android.popularmovies2.data.MovieContract;
 import com.example.android.popularmovies2.data.model.Movie;
 import com.example.android.popularmovies2.data.model.MovieReview;
 import com.example.android.popularmovies2.data.model.MovieVideo;
@@ -41,6 +45,8 @@ public class DetailActivity extends AppCompatActivity implements MovieVideoAdapt
     private TMDBService mService;
     private MovieVideoAdapter mMovieVideoAdapter;
     private MovieReviewAdapter mMovieReviewAdapter;
+    private boolean mIsFavorite;
+    private Toast mToast;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -60,6 +66,40 @@ public class DetailActivity extends AppCompatActivity implements MovieVideoAdapt
         mDetailBinding.collapsingToolbarLayout.setExpandedTitleTextAppearance(R.style.ExpandedTitleTextStyle);
         mDetailBinding.collapsingToolbarLayout.setCollapsedTitleTextColor(Color.WHITE);
 
+        populateViews();
+
+        if (savedInstanceState != null) {
+            mVideos = savedInstanceState.getParcelableArrayList(MOVIE_VIDEOS_RESULTS);
+            mReviews = savedInstanceState.getParcelableArrayList(MOVIE_REVIEWS_RESULTS);
+            mMovieVideoAdapter.setMovieVideoData(mVideos);
+            showVideos();
+            mMovieReviewAdapter.setMovieReviewsData(mReviews);
+            showReviews();
+        }
+
+        if (ApiUtils.isOnline(this)) {
+            if (mVideos == null) {
+                loadVideos();
+            }
+            if (mReviews == null) loadReviews();
+
+        } else showErrorMessage();
+
+        isFavorite();
+
+        ViewCompat.setNestedScrollingEnabled(mDetailBinding.rvMovieReviews, false);
+        ViewCompat.setNestedScrollingEnabled(mDetailBinding.rvMovieVideos, false);
+    }
+
+    @Override
+    protected void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+        outState.putParcelableArrayList(MOVIE_VIDEOS_RESULTS, mVideos);
+        outState.putParcelableArrayList(MOVIE_REVIEWS_RESULTS, mReviews);
+
+    }
+
+    private void populateViews() {
         if (mMovie.getBackdropPath() != null) {
             String movieBackdropImageUrl = ApiUtils.getImageStringUrl(mMovie.getBackdropPath(), "w780");
             Picasso.with(this).load(movieBackdropImageUrl).into(mDetailBinding.ivMovieBackdrop);
@@ -88,35 +128,15 @@ public class DetailActivity extends AppCompatActivity implements MovieVideoAdapt
         mMovieReviewAdapter = new MovieReviewAdapter();
         mDetailBinding.rvMovieReviews.setLayoutManager(new LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false));
         mDetailBinding.rvMovieReviews.setAdapter(mMovieReviewAdapter);
-
-        if (savedInstanceState != null) {
-            mVideos = savedInstanceState.getParcelableArrayList(MOVIE_VIDEOS_RESULTS);
-            mReviews = savedInstanceState.getParcelableArrayList(MOVIE_REVIEWS_RESULTS);
-            mMovieVideoAdapter.setMovieVideoData(mVideos);
-            showVideos();
-            mMovieReviewAdapter.setMovieReviewsData(mReviews);
-            showReviews();
-        }
-
-        if (ApiUtils.isOnline(this)) {
-            if (mVideos == null) {
-                Log.v(TAG, "loading videos");
-                loadVideos();
-            }
-            if (mReviews == null) loadReviews();
-
-        } else showErrorMessage();
-
-        ViewCompat.setNestedScrollingEnabled(mDetailBinding.rvMovieReviews, false);
-        ViewCompat.setNestedScrollingEnabled(mDetailBinding.rvMovieVideos, false);
     }
 
-    @Override
-    protected void onSaveInstanceState(Bundle outState) {
-        super.onSaveInstanceState(outState);
-        outState.putParcelableArrayList(MOVIE_VIDEOS_RESULTS, mVideos);
-        outState.putParcelableArrayList(MOVIE_REVIEWS_RESULTS, mReviews);
-
+    private void isFavorite() {
+        Uri uri = MovieContract.buildMovieUriWithId(mMovie.getId());
+        Cursor cursor = getContentResolver().query(uri, null, null, null, null);
+        boolean exists = (cursor.getCount() > 0);
+        cursor.close();
+        mIsFavorite = exists;
+        setFavoriteIcon();
     }
 
     public void loadVideos() {
@@ -144,22 +164,6 @@ public class DetailActivity extends AppCompatActivity implements MovieVideoAdapt
         });
     }
 
-    @Override
-    public void onClick(MovieVideo selectedVideo) {
-        Context context = this;
-        String videoId = selectedVideo.getKey();
-        Uri uri = Uri.parse(ApiUtils.YOUTUBE_BASE_URL).buildUpon().appendQueryParameter("v", videoId).build();
-
-        Intent appIntent = new Intent(Intent.ACTION_VIEW, Uri.parse("vnd.youtube:" + videoId));
-        Intent webIntent = new Intent(Intent.ACTION_VIEW, uri);
-        try {
-            context.startActivity(appIntent);
-        } catch (ActivityNotFoundException e) {
-            context.startActivity(webIntent);
-        }
-
-    }
-
     public void loadReviews() {
         mDetailBinding.pbMovieReviewsLoadingIndicator.setVisibility(View.VISIBLE);
         mService.getReviews(mMovie.getId()).enqueue(new Callback<TMDBMovieReviewsResponse>() {
@@ -183,6 +187,63 @@ public class DetailActivity extends AppCompatActivity implements MovieVideoAdapt
                 Log.d(TAG, "error loading from API");
             }
         });
+    }
+
+    @Override
+    public void onClickVideo(MovieVideo selectedVideo) {
+        Context context = this;
+        String videoId = selectedVideo.getKey();
+        Uri uri = Uri.parse(ApiUtils.YOUTUBE_BASE_URL).buildUpon().appendQueryParameter("v", videoId).build();
+
+        Intent appIntent = new Intent(Intent.ACTION_VIEW, Uri.parse("vnd.youtube:" + videoId));
+        Intent webIntent = new Intent(Intent.ACTION_VIEW, uri);
+        try {
+            context.startActivity(appIntent);
+        } catch (ActivityNotFoundException e) {
+            context.startActivity(webIntent);
+        }
+
+    }
+
+    public void onClickToggleFavorite(View view) {
+        if (mIsFavorite) {
+            Uri uri = MovieContract.buildMovieUriWithId(mMovie.getId());
+            int moviesDeleted = getContentResolver().delete(uri, null, null);
+            if (moviesDeleted != 0) {
+                if(mToast != null) mToast.cancel();
+                mToast = Toast.makeText(getBaseContext(), R.string.unmarked_as_favorite, Toast.LENGTH_SHORT);
+                mToast.show();
+                mIsFavorite = !mIsFavorite;
+            }
+        } else {
+            ContentValues contentValues = new ContentValues();
+            contentValues.put(MovieContract.MovieEntry.COLUMN_MOVIE_ID, mMovie.getId());
+            contentValues.put(MovieContract.MovieEntry.COLUMN_TITLE, mMovie.getTitle());
+            contentValues.put(MovieContract.MovieEntry.COLUMN_ORIGINAL_TITLE, mMovie.getOriginalTitle());
+            contentValues.put(MovieContract.MovieEntry.COLUMN_POSTER_PATH, mMovie.getPosterPath());
+            contentValues.put(MovieContract.MovieEntry.COLUMN_BACKDROP_PATH, mMovie.getBackdropPath());
+            contentValues.put(MovieContract.MovieEntry.COLUMN_OVERVIEW, mMovie.getOverview());
+            contentValues.put(MovieContract.MovieEntry.COLUMN_RELEASE_DATE, mMovie.getReleaseDate());
+            contentValues.put(MovieContract.MovieEntry.COLUMN_VOTE_AVERAGE, mMovie.getVoteAverage());
+
+            Uri uri = getContentResolver().insert(MovieContract.MovieEntry.CONTENT_URI, contentValues);
+
+            if (uri != null) {
+                if(mToast != null) mToast.cancel();
+                mToast = Toast.makeText(getBaseContext(), R.string.marked_as_favorite, Toast.LENGTH_SHORT);
+                mToast.show();
+                mIsFavorite = !mIsFavorite;
+            }
+        }
+        setFavoriteIcon();
+    }
+
+    private void setFavoriteIcon() {
+        if (mIsFavorite) {
+            mDetailBinding.ivFavorite.setImageResource(R.drawable.ic_favorite_white_24dp);
+        } else {
+            mDetailBinding.ivFavorite.setImageResource(R.drawable.ic_favorite_border_white_24dp);
+        }
     }
 
     private void showVideos() {

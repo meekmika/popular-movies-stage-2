@@ -8,6 +8,8 @@
     <string name="error_message_reviews">Could not get the movie reviews. Check your Internet connection!</string>
     <string name="no_reviews_message">There are no reviews for this movie yet.</string>
     <string name="no_videos_message">There are no videos for this movie yet.</string>
+    <string name="marked_as_favorite">Marked as favorite!</string>
+    <string name="unmarked_as_favorite">Unmarked as favorite!</string>
 
     <string name="release_year_label">Release year</string>
     <string name="original_title_label">Original Title</string>

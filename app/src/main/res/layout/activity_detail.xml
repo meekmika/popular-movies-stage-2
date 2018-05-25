@@ -38,7 +38,21 @@
                     android:theme="@style/ThemeOverlay.AppCompat.ActionBar"
                     app:layout_collapseMode="pin"
                     app:popupTheme="@style/ThemeOverlay.AppCompat.Light"
-                    app:titleTextColor="@android:color/white" />
+                    app:titleTextColor="@android:color/white">
+
+                    <ImageButton
+                        android:id="@+id/iv_favorite"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="end"
+                        android:layout_marginLeft="@dimen/margin_large"
+                        android:layout_marginRight="@dimen/margin_large"
+                        android:background="@android:color/transparent"
+                        android:onClick="onClickToggleFavorite"
+                        android:paddingLeft="@dimen/margin_large"
+                        android:src="@drawable/ic_favorite_border_white_24dp" />
+
+                </android.support.v7.widget.Toolbar>
 
 
             </net.opacapp.multilinecollapsingtoolbar.CollapsingToolbarLayout>
