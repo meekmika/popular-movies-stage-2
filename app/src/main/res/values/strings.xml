@@ -24,6 +24,10 @@
     <string name="pref_sort_order_key" translatable="false">sort_order</string>
     <string name="pref_sort_order_popular" translatable="false">popular</string>
     <string name="pref_sort_order_top" translatable="false">top_rated</string>
+    <string name="pref_show_favorites_key" translatable="false">show_favorites</string>
+    <string name="pref_show_favorites_label">Show Favorites</string>
+    <string name="pref_show_false">Show all movies</string>
+    <string name="pref_show_true">Show only favorite movies</string>
 
 
 </resources>

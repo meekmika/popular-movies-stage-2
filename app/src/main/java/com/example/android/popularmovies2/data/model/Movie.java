@@ -85,6 +85,8 @@ public class Movie implements Parcelable {
         voteAverage = in.readDouble();
     }
 
+    public Movie() {}
+
     public String getPosterPath() {
         return posterPath;
     }

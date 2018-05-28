@@ -2,10 +2,19 @@
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
+
     <ListPreference
         android:defaultValue="popular"
         android:entries="@array/pref_sort_order_options"
         android:entryValues="@array/pref_units_values"
         android:key="@string/pref_sort_order_key"
         android:title="@string/pref_sort_order_label" />
+
+    <CheckBoxPreference
+        android:defaultValue="@bool/pref_show_favorites_default"
+        android:key="@string/pref_show_favorites_key"
+        android:summaryOff="@string/pref_show_false"
+        android:summaryOn="@string/pref_show_true"
+        android:title="@string/pref_show_favorites_label" />
+
 </PreferenceScreen>

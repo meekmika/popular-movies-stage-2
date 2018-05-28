@@ -130,6 +130,13 @@ public class DetailActivity extends AppCompatActivity implements MovieVideoAdapt
         mDetailBinding.rvMovieReviews.setAdapter(mMovieReviewAdapter);
     }
 
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        if (mToast != null) mToast.cancel();
+
+    }
+
     private void isFavorite() {
         Uri uri = MovieContract.buildMovieUriWithId(mMovie.getId());
         Cursor cursor = getContentResolver().query(uri, null, null, null, null);
@@ -210,8 +217,8 @@ public class DetailActivity extends AppCompatActivity implements MovieVideoAdapt
             Uri uri = MovieContract.buildMovieUriWithId(mMovie.getId());
             int moviesDeleted = getContentResolver().delete(uri, null, null);
             if (moviesDeleted != 0) {
-                if(mToast != null) mToast.cancel();
-                mToast = Toast.makeText(getBaseContext(), R.string.unmarked_as_favorite, Toast.LENGTH_SHORT);
+                if (mToast != null) mToast.cancel();
+                mToast = Toast.makeText(getBaseContext(), R.string.unmarked_as_favorite, Toast.LENGTH_LONG);
                 mToast.show();
                 mIsFavorite = !mIsFavorite;
             }
@@ -221,16 +228,18 @@ public class DetailActivity extends AppCompatActivity implements MovieVideoAdapt
             contentValues.put(MovieContract.MovieEntry.COLUMN_TITLE, mMovie.getTitle());
             contentValues.put(MovieContract.MovieEntry.COLUMN_ORIGINAL_TITLE, mMovie.getOriginalTitle());
             contentValues.put(MovieContract.MovieEntry.COLUMN_POSTER_PATH, mMovie.getPosterPath());
+
             contentValues.put(MovieContract.MovieEntry.COLUMN_BACKDROP_PATH, mMovie.getBackdropPath());
             contentValues.put(MovieContract.MovieEntry.COLUMN_OVERVIEW, mMovie.getOverview());
             contentValues.put(MovieContract.MovieEntry.COLUMN_RELEASE_DATE, mMovie.getReleaseDate());
             contentValues.put(MovieContract.MovieEntry.COLUMN_VOTE_AVERAGE, mMovie.getVoteAverage());
+            contentValues.put(MovieContract.MovieEntry.COLUMN_POPULARITY, mMovie.getPopularity());
 
             Uri uri = getContentResolver().insert(MovieContract.MovieEntry.CONTENT_URI, contentValues);
 
             if (uri != null) {
-                if(mToast != null) mToast.cancel();
-                mToast = Toast.makeText(getBaseContext(), R.string.marked_as_favorite, Toast.LENGTH_SHORT);
+                if (mToast != null) mToast.cancel();
+                mToast = Toast.makeText(getBaseContext(), R.string.marked_as_favorite, Toast.LENGTH_LONG);
                 mToast.show();
                 mIsFavorite = !mIsFavorite;
             }

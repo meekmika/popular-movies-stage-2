@@ -3,7 +3,13 @@ package com.example.android.popularmovies2;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.database.Cursor;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
+import android.support.v4.app.LoaderManager;
+import android.support.v4.content.AsyncTaskLoader;
+import android.support.v4.content.Loader;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.preference.PreferenceManager;
 import android.support.v7.widget.GridLayoutManager;
@@ -17,6 +23,7 @@ import android.view.View;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 
+import com.example.android.popularmovies2.data.MovieContract;
 import com.example.android.popularmovies2.data.model.Movie;
 import com.example.android.popularmovies2.data.model.TMDBMoviesResponse;
 import com.example.android.popularmovies2.data.remote.TMDBService;
@@ -32,11 +39,12 @@ import retrofit2.Response;
 
 public class MainActivity extends AppCompatActivity implements
         SharedPreferences.OnSharedPreferenceChangeListener,
-        MoviePosterAdapter.MoviePosterAdapterOnClickHandler {
+        MoviePosterAdapter.MoviePosterAdapterOnClickHandler,
+        LoaderManager.LoaderCallbacks<Cursor> {
 
     private static final String TAG = MainActivity.class.getSimpleName();
     private static final String MOVIES_RESULT = "movies-result";
-
+    private static final int FAVORITE_MOVIE_LOADER_ID = 42;
 
     @BindView(R.id.rv_movies)
     RecyclerView mRecyclerView;
@@ -47,6 +55,9 @@ public class MainActivity extends AppCompatActivity implements
     private TMDBService mService;
     private MoviePosterAdapter mAdapter;
     private ArrayList<Movie> mMovies;
+    private ArrayList<Movie> mFavoriteMovies;
+    private String mPrefSortOrder;
+    private boolean mShowFavorites;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -63,43 +74,45 @@ public class MainActivity extends AppCompatActivity implements
         mRecyclerView.setHasFixedSize(true);
 
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
-        String prefSortOrder = prefs.getString(getString(R.string.pref_sort_order_key), getString(R.string.pref_sort_order_popular));
+        mPrefSortOrder = prefs.getString(getString(R.string.pref_sort_order_key), getString(R.string.pref_sort_order_popular));
+        mShowFavorites = prefs.getBoolean(getString(R.string.pref_show_favorites_key), getResources().getBoolean(R.bool.pref_show_favorites_default));
+
+        getSupportLoaderManager().initLoader(FAVORITE_MOVIE_LOADER_ID, null, this);
 
         if (savedInstanceState != null) {
             mMovies = savedInstanceState.getParcelableArrayList(MOVIES_RESULT);
-            mAdapter.setMovieData(mMovies);
         }
-
-        if (ApiUtils.isOnline(this)) {
-            if (mMovies == null) loadMovies(prefSortOrder);
-            showMovies();
-        } else showErrorMessage();
 
         PreferenceManager.getDefaultSharedPreferences(this).registerOnSharedPreferenceChangeListener(this);
     }
 
-    public void loadMovies(String sortOrder) {
+    public void loadMovies() {
         mLoadingIndicator.setVisibility(View.VISIBLE);
-        mService.getMovies(sortOrder).enqueue(new Callback<TMDBMoviesResponse>() {
-            @Override
-            public void onResponse(Call<TMDBMoviesResponse> call, Response<TMDBMoviesResponse> response) {
-                if (response.isSuccessful()) {
-                    mLoadingIndicator.setVisibility(View.INVISIBLE);
-                    mMovies = (ArrayList<Movie>) response.body().getResults();
-                    mAdapter.setMovieData(mMovies);
-                    Log.d(TAG, "movies loaded from API");
-                } else {
-                    int statusCode = response.code();
-                    // handle request errors depending on status code
-                    Log.v(TAG, "Request error. Status code: " + statusCode);
+        if (ApiUtils.isOnline(this)) {
+            mService.getMovies(mPrefSortOrder).enqueue(new Callback<TMDBMoviesResponse>() {
+                @Override
+                public void onResponse(Call<TMDBMoviesResponse> call, Response<TMDBMoviesResponse> response) {
+                    if (response.isSuccessful()) {
+                        mLoadingIndicator.setVisibility(View.INVISIBLE);
+                        mMovies = (ArrayList<Movie>) response.body().getResults();
+                        mAdapter.setMovieData(mMovies);
+                        Log.d(TAG, "movies loaded from API");
+                    } else {
+                        int statusCode = response.code();
+                        // handle request errors depending on status code
+                        Log.v(TAG, "Request error. Status code: " + statusCode);
+                    }
                 }
-            }
 
-            @Override
-            public void onFailure(Call<TMDBMoviesResponse> call, Throwable t) {
-                Log.d(TAG, "error loading from API");
-            }
-        });
+                @Override
+                public void onFailure(Call<TMDBMoviesResponse> call, Throwable t) {
+                    Log.d(TAG, "error loading from API");
+                    showErrorMessage();
+                }
+            });
+        } else {
+            showErrorMessage();
+        }
     }
 
     @Override
@@ -111,7 +124,6 @@ public class MainActivity extends AppCompatActivity implements
     private int numberOfColumns() {
         DisplayMetrics displayMetrics = new DisplayMetrics();
         getWindowManager().getDefaultDisplay().getMetrics(displayMetrics);
-        // You can change this divider to adjust the size of the poster
         int widthDivider = 400;
         int width = displayMetrics.widthPixels;
         int nColumns = width / widthDivider;
@@ -129,13 +141,29 @@ public class MainActivity extends AppCompatActivity implements
     }
 
     private void showErrorMessage() {
+        mLoadingIndicator.setVisibility(View.GONE);
         mErrorMessageDisplay.setVisibility(View.VISIBLE);
-        mRecyclerView.setVisibility(View.INVISIBLE);
+        mRecyclerView.setVisibility(View.GONE);
     }
 
     private void showMovies() {
         mErrorMessageDisplay.setVisibility(View.GONE);
+        if (mShowFavorites) {
+            if (mFavoriteMovies == null)
+                getSupportLoaderManager().restartLoader(FAVORITE_MOVIE_LOADER_ID, null, this);
+            mAdapter.setMovieData(mFavoriteMovies);
+        } else {
+            if (mMovies == null) loadMovies();
+            mAdapter.setMovieData(mMovies);
+        }
         mRecyclerView.setVisibility(View.VISIBLE);
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        getSupportLoaderManager().restartLoader(FAVORITE_MOVIE_LOADER_ID, null, this);
+        showMovies();
     }
 
     @Override
@@ -157,12 +185,103 @@ public class MainActivity extends AppCompatActivity implements
         return super.onOptionsItemSelected(item);
     }
 
-
     @Override
     public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
         if (key.equals(getString(R.string.pref_sort_order_key))) {
-            loadMovies(sharedPreferences.getString(getString(R.string.pref_sort_order_key), getString(R.string.pref_sort_order_popular)));
+            mMovies = null;
+            mFavoriteMovies = null;
+            mPrefSortOrder = sharedPreferences.getString(key, getString(R.string.pref_sort_order_popular));
+            showMovies();
+        } else if (key.equals(getString(R.string.pref_show_favorites_key))) {
+            mShowFavorites = sharedPreferences.getBoolean(key, getResources().getBoolean(R.bool.pref_show_favorites_default));
+            showMovies();
         }
+    }
+
+    @NonNull
+    @Override
+    public Loader<Cursor> onCreateLoader(int id, @Nullable Bundle loaderArgs) {
+        return new AsyncTaskLoader<Cursor>(this) {
+
+            Cursor favoriteMovies = null;
+
+            @Override
+            protected void onStartLoading() {
+                if (favoriteMovies != null) {
+                    deliverResult(favoriteMovies);
+                } else {
+                    forceLoad();
+                }
+            }
+
+            @Nullable
+            @Override
+            public Cursor loadInBackground() {
+
+                String sortorder = null;
+                switch (mPrefSortOrder) {
+                    case "top_rated":
+                        sortorder = MovieContract.MovieEntry.COLUMN_VOTE_AVERAGE;
+                        break;
+                    case "popular":
+                        sortorder = MovieContract.MovieEntry.COLUMN_POPULARITY;
+                }
+
+                try {
+                    return getContentResolver().query(MovieContract.MovieEntry.CONTENT_URI,
+                            null,
+                            null,
+                            null,
+                            sortorder);
+                } catch (Exception e) {
+                    Log.e(TAG, "Failed to load favorite movies");
+                    e.printStackTrace();
+                    return null;
+                }
+            }
+
+            @Override
+            public void deliverResult(@Nullable Cursor data) {
+                favoriteMovies = data;
+                super.deliverResult(data);
+            }
+        };
+    }
+
+    @Override
+    public void onLoadFinished(@NonNull Loader<Cursor> loader, Cursor data) {
+        ArrayList<Movie> favoriteMovies = new ArrayList<Movie>();
+        int movieIdIndex = data.getColumnIndex(MovieContract.MovieEntry.COLUMN_MOVIE_ID);
+        int titleIndex = data.getColumnIndex(MovieContract.MovieEntry.COLUMN_TITLE);
+        int originalTitleIndex = data.getColumnIndex(MovieContract.MovieEntry.COLUMN_ORIGINAL_TITLE);
+        int posterPathIndex = data.getColumnIndex(MovieContract.MovieEntry.COLUMN_POSTER_PATH);
+        int backdropPathIndex = data.getColumnIndex(MovieContract.MovieEntry.COLUMN_BACKDROP_PATH);
+        int overviewIndex = data.getColumnIndex(MovieContract.MovieEntry.COLUMN_OVERVIEW);
+        int releaseDateIndex = data.getColumnIndex(MovieContract.MovieEntry.COLUMN_RELEASE_DATE);
+        int voteAverageIndex = data.getColumnIndex(MovieContract.MovieEntry.COLUMN_VOTE_AVERAGE);
+        int popularityIndex = data.getColumnIndex(MovieContract.MovieEntry.COLUMN_POPULARITY);
+
+        while (data.moveToNext()) {
+            Movie movie = new Movie();
+            movie.setId(data.getInt(movieIdIndex));
+            movie.setTitle(data.getString(titleIndex));
+            movie.setOriginalTitle(data.getString(originalTitleIndex));
+            movie.setPosterPath(data.getString(posterPathIndex));
+            movie.setBackdropPath(data.getString(backdropPathIndex));
+            movie.setOverview(data.getString(overviewIndex));
+            movie.setReleaseDate(data.getString(releaseDateIndex));
+            movie.setVoteAverage(data.getDouble(voteAverageIndex));
+            movie.setPopularity(data.getDouble(popularityIndex));
+            favoriteMovies.add(movie);
+        }
+
+        mFavoriteMovies = favoriteMovies;
+        if (mShowFavorites) mAdapter.setMovieData(mFavoriteMovies);
+    }
+
+    @Override
+    public void onLoaderReset(@NonNull Loader<Cursor> loader) {
+        mAdapter.setMovieData(null);
     }
 
     @Override
@@ -170,4 +289,6 @@ public class MainActivity extends AppCompatActivity implements
         super.onDestroy();
         PreferenceManager.getDefaultSharedPreferences(this).unregisterOnSharedPreferenceChangeListener(this);
     }
+
+
 }

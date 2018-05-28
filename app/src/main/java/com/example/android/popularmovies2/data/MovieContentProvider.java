@@ -85,7 +85,7 @@ public class MovieContentProvider extends ContentProvider {
                         selectionArgs,
                         null,
                         null,
-                        sortOrder);
+                        sortOrder + " DESC");
                 break;
             default:
                 throw new UnsupportedOperationException("Unknown uri: " + uri);
